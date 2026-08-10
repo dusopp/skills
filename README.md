@@ -60,6 +60,30 @@ and `.\install-copilot.ps1 -Uninstall` for the Copilot side.
 Full operations guide (state checks, pattern conventions, gotchas, E2E verification):
 [`plugins/agent-guardrails/skills/agent-guardrails/SKILL.md`](plugins/agent-guardrails/skills/agent-guardrails/SKILL.md)
 
+### git-worktree
+
+A playbook skill for running **parallel coding agents without collisions**: one task =
+one worktree = one agent session. Tailored for Windows/.NET/Azure DevOps - Claude Code
+native worktrees (`claude --worktree`, subagent `isolation: worktree`, `.worktreeinclude`
+bootstrap), manual worktrees for GitHub Copilot (VS Code agent mode + CLI), the light
+.NET bootstrap (NuGet cache and user secrets are shared per-user; the two real collisions
+are ports and LocalDB/EF migrations), and merging back on personal repos vs
+policy-protected Azure DevOps repos (`az repos pr create`). Explicit invocation only:
+`/git-worktree`.
+
+**Install (Claude Code):**
+
+```
+/plugin install git-worktree@dusopp-skills
+```
+
+**Install (GitHub Copilot):** from the installed plugin's `scripts` dir run
+`.\install-copilot.ps1` - it junctions the skill into `~/.copilot/skills`, which Copilot
+CLI and VS Code agent mode read automatically. (`-Uninstall` removes it. Visual Studio
+IDE has no skills support.)
+
+Skill source: [`plugins/git-worktree/skills/git-worktree/SKILL.md`](plugins/git-worktree/skills/git-worktree/SKILL.md)
+
 Inspired by [davidondrej/skills](https://github.com/davidondrej/skills)
 `ops-and-setup/global-agent-guardrails` (bash, multi-agent), rebuilt for Windows,
 PowerShell 5.1+, Azure, Azure DevOps, .NET, and the Claude Code + GitHub Copilot pair.

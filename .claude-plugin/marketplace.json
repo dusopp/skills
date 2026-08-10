@@ -24,6 +24,24 @@
         "windows",
         "copilot"
       ]
+    },
+    {
+      "name": "git-worktree",
+      "source": "./plugins/git-worktree",
+      "description": "Run parallel coding agents safely via git worktrees on Windows/.NET: Claude Code native worktrees, manual worktrees for GitHub Copilot, .NET bootstrap (NuGet/user secrets/ports/LocalDB/EF), and Azure DevOps PR-based merge flow. Explicit invocation: /git-worktree.",
+      "author": {
+        "name": "dusopp"
+      },
+      "category": "workflow",
+      "keywords": [
+        "git",
+        "worktree",
+        "parallel-agents",
+        "dotnet",
+        "windows",
+        "azure-devops",
+        "copilot"
+      ]
     }
   ]
 }

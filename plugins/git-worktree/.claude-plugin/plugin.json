@@ -1,0 +1,9 @@
+{
+  "name": "git-worktree",
+  "version": "0.1.0",
+  "description": "Run parallel coding agents safely via git worktrees on Windows/.NET: Claude Code native worktrees, manual worktrees for GitHub Copilot, .NET bootstrap (NuGet/user secrets/ports/LocalDB), and Azure DevOps PR-based merge flow.",
+  "author": {
+    "name": "dusopp",
+    "url": "https://github.com/dusopp"
+  }
+}
