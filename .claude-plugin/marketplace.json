@@ -1,0 +1,29 @@
+{
+  "name": "dusopp-skills",
+  "owner": {
+    "name": "dusopp",
+    "url": "https://github.com/dusopp"
+  },
+  "description": "Personal Claude Code plugin marketplace (Windows / .NET / Azure focused)",
+  "plugins": [
+    {
+      "name": "agent-guardrails",
+      "source": "./plugins/agent-guardrails",
+      "description": "Block-only PreToolUse guard for catastrophic commands: az/azd/azcopy, Azure DevOps, Az PowerShell, dotnet nuget, git force-push, disk/registry wipes, destructive MCP tool calls. One denylist shared by Claude Code and GitHub Copilot (VS Code + CLI).",
+      "author": {
+        "name": "dusopp"
+      },
+      "category": "safety",
+      "keywords": [
+        "guardrails",
+        "hooks",
+        "pretooluse",
+        "azure",
+        "azure-devops",
+        "dotnet",
+        "windows",
+        "copilot"
+      ]
+    }
+  ]
+}

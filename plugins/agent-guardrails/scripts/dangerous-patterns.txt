@@ -1,0 +1,145 @@
+# agent-guardrails deny list
+# =========================================================================
+# One regex per line. Blank lines and lines starting with # are ignored.
+# Section headers route patterns:
+#   [shell]        matched against shell command strings (Claude Bash/PowerShell
+#                  tools, Copilot terminal tools) AND against any string found
+#                  under a property named "command" inside MCP tool arguments.
+#   [mcp-tool]     matched against MCP tool NAMES only (mcp__server__tool).
+#   [mcp-command]  matched against MCP-carried "command" field values only.
+#
+# Regex rules (this is the .NET flavor, evaluated case-INsensitively):
+#   - NO POSIX classes: [[:alpha:]] fails SILENTLY in .NET. Use \w, \s, \b.
+#   - Use \b for word boundaries, never \< or \>.
+#   - ^ and $ match the whole (possibly multi-line) command string, not lines.
+#   - (?!\S) means "end of token": accepts whitespace or end-of-string, and
+#     rejects longer flags (--force matches, --force-with-lease does not).
+#   - [^\n;&|]* means "within the same shell statement": prevents a pattern
+#     from matching across ; && || | boundaries. Prefer it over .*
+#   - A trailing space on a line is a literal regex character: lines are
+#     trimmed on load, so do not rely on trailing whitespace.
+#
+# Design rule: block only IRREVERSIBLE or CATASTROPHIC actions (mass data
+# loss, purges that defeat soft-delete, safety-net removal, identity
+# destruction, irreversible publishes). Local-destructive-but-recoverable
+# commands stay ALLOWED - over-blocking kills agent usefulness.
+#
+# Deliberately ALLOWED (do not "fix" these): az webapp/functionapp delete,
+# az sql db delete, az keyvault delete (soft delete is recoverable; purge is
+# not), single az storage container/blob delete, dotnet ef database drop,
+# git push --force-with-lease, rm -rf node_modules, git clean, and all
+# Azure DevOps MCP *_write tools (daily workflow; that server ships no
+# delete tools by design as of v2.9).
+#
+# Known accepted gaps (documented, not bugs): git -C <dir> push --force
+# (options between git and push), combined short flags like -fu, split rm
+# flags (rm -r -f /), quoting/encoding obfuscation. This guard is a seatbelt
+# against accidents, not a sandbox against a malicious agent.
+# =========================================================================
+
+[shell]
+
+# --- filesystem / disk / registry (Windows + Git Bash) -------------------
+--no-preserve-root
+\brm\b(?=[^\n;&|]*\s-{1,2}\S*r)(?=[^\n;&|]*\s-{1,2}\S*f)[^\n;&|]*\s["']?(/|~/?|\$HOME/?|%USERPROFILE%\\?|/c/users(/[^/\s"']+)?/?)["']?(\s|$)
+\bRemove-Item\b(?=[^\n;&|]*-Recurse)[^\n;&|]*\s["']?[a-z]:[\\/]?\*?["']?(\s|$)
+\bRemove-Item\b(?=[^\n;&|]*-Recurse)[^\n;&|]*(\$env:USERPROFILE|\$HOME)["'\\/]{0,2}\*?["']?(\s|$)
+\bRemove-Item\b[^\n;&|]*["']?HK(LM|CU):[\\/]?["']?(\s|$)
+\breg\s+delete\s+["']?HK(LM|CU)(\\(SOFTWARE|SYSTEM))?["']?(\s|$)
+\b(rd|rmdir)\b(?=[^\n;&|]*\s/s\b)[^\n;&|]*\s["']?[a-z]:[\\/]?["']?(\s|$)
+\bdel\b(?=[^\n;&|]*\s/s\b)[^\n;&|]*\s["']?[a-z]:\\?\*?(\.\*)?["']?(\s|$)
+(^|\s)format(\.com|\.exe)?\s+[a-z]:(\s|$|[\\/])
+\bFormat-Volume\b
+\bClear-Disk\b
+\bInitialize-Disk\b
+\bdiskpart\b
+\bmkfs(\.[a-z0-9]+)?\b
+\bdd\b[^\n;&|]*\bof=/dev/
+:\(\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;
+\b(curl|wget|iwr|irm|Invoke-WebRequest|Invoke-RestMethod)\b[^\n;]*\|\s*(sh|bash|zsh|pwsh|powershell|iex|Invoke-Expression)\b
+\b(iex|Invoke-Expression)\s*\(\s*(irm|iwr|Invoke-RestMethod|Invoke-WebRequest)\b
+\bvssadmin\b[^\n;&|]*\bdelete\s+shadows\b
+
+# --- git / GitHub (force-with-lease stays allowed via (?!\S)) ------------
+\bgit\s+push\b[^\n;&|]*\s--force(?!\S)
+\bgit\s+push\b[^\n;&|]*\s-f(?!\S)
+\bgit\s+push\b[^\n;&|]*\s\+\S
+\bgit\s+push\b[^\n;&|]*\s(--delete|-d)(?!\S)
+\bgit\s+push\b[^\n;&|]*\s:(main|master|develop|release\S*)(?!\S)
+\bgit\s+reflog\s+expire\b[^\n;&|]*--expire=now
+\bgit\s+gc\b[^\n;&|]*--prune=now
+\bgh\s+repo\s+delete\b
+\bgh\s+(release|secret)\s+delete\b
+\bgh\s+api\b[^\n;&|]*(-X|--method)\s+DELETE\b
+\bgh\s+auth\s+token\b
+
+# --- Azure control plane (az CLI) ----------------------------------------
+\baz\s+group\s+delete\b
+\baz\s+resource\s+delete\b
+\baz\s+(group\s+deployment|deployment(\s+(group|sub|mg|tenant))?)\s+create\b[^\n;&|]*--mode\s+complete\b
+\baz\s+stack\s+(group|sub|mg)\s+[a-z-]+\b[^\n;&|]*--action-on-unmanage\s+delete
+\baz\s+keyvault\s+(key\s+|secret\s+|certificate\s+)?purge\b
+\baz\s+storage\s+account\s+delete\b
+\baz\s+sql\s+(server|mi)\s+delete\b
+\baz\s+cosmosdb\s+delete\b
+\baz\s+aks\s+delete\b
+\baz\s+ad\s+(app|sp)\s+delete\b
+\baz\s+(group\s+|resource\s+)?lock\s+delete\b
+\baz\s+backup\s+[\w -]*\bdelete\b
+\bazd\s+down\b
+--permanent-delete\b
+
+# --- Azure storage mass destruction / safety-net removal -----------------
+\baz\s+storage\s+blob\s+delete-batch\b
+\bazcopy\s+(remove|rm)\b
+\bazcopy\s+sync\b[^\n;&|]*--delete-destination[=\s]+true\b
+\baz\s+storage\s+container\s+immutability-policy\s+delete\b
+\baz\s+storage\s+container\s+legal-hold\s+clear\b
+
+# --- Azure DevOps ---------------------------------------------------------
+\baz\s+devops\s+project\s+delete\b
+\baz\s+repos\s+delete\b
+\baz\s+repos\s+ref\s+delete\b
+\baz\s+repos\s+policy\s+delete\b
+\baz\s+pipelines\s+delete\b
+\baz\s+pipelines\s+(variable-group|folder)\s+delete\b
+\baz\s+boards\s+work-item\s+delete\b[^\n;&|]*--destroy\b
+\baz\s+devops\s+invoke\b[^\n;&|]*--http-method\s+delete\b
+\baz\s+devops\s+(team|service-endpoint)\s+delete\b
+\baz\s+devops\s+security\s+group\s+delete\b
+\baz\s+devops\s+security\s+permission\s+(reset-all|reset|update)\b
+\baz\s+devops\s+user\s+remove\b
+\baz\s+devops\s+wiki\s+(page\s+)?delete\b
+
+# --- Az PowerShell --------------------------------------------------------
+\bRemove-AzResourceGroup\b
+\bRemove-AzResource\b
+\bRemove-AzResourceLock\b
+\bRemove-AzStorageAccount\b
+\bRemove-AzSqlServer\b
+\bRemove-AzCosmosDBAccount\b
+\bRemove-AzAksCluster\b
+\bRemove-AzAks\b
+\bRemove-AzKeyVault\b[^\n;&|]*-InRemovedState\b
+\bNew-AzResourceGroupDeployment\b[^\n;&|]*-Mode\s+Complete\b
+\|\s*Remove-Az\w+
+
+# --- .NET / packages / databases -----------------------------------------
+\bdotnet\s+nuget\s+push\b
+\bdotnet\s+nuget\s+delete\b
+\baz\s+artifacts\s+universal\s+publish\b
+\b(sqlcmd|Invoke-Sqlcmd)\b[^\n]*\bdrop\s+(database|schema)\b
+
+[mcp-tool]
+# Matched against MCP tool names only (mcp__server__tool, mcp__plugin_x_y__tool).
+# Verb suffix match, not exact names: server prefixes vary per machine/project.
+__[\w.-]*(delete|purge|destroy)
+# Old Azure MCP servers shipped arbitrary az/azd execution tools; block them
+# defensively (harmless on current servers, critical on pinned old versions).
+\bextension[-_]azd?\b
+
+[mcp-command]
+# Matched only against "command" field values inside MCP tool arguments
+# (e.g. Azure MCP namespace mode routes the real operation through
+# tool_input.command). Never matched against free-text fields.
+\b(delete|purge|destroy)\b
