@@ -11,7 +11,7 @@ as a plugin hook, GitHub Copilot (VS Code agent mode and Copilot CLI) via a `~/.
 file pointing at the same script. It is a seatbelt against ACCIDENTS, NOT a security boundary:
 regex can be bypassed by encoding, splitting, or obfuscation.
 
-Tailored from davidondrej/skills `global-agent-guardrails` (bash/jq, 9 agents) for:
+Tailored for:
 Windows 11, PowerShell 5.1+, Azure (az/azd/azcopy/Az PowerShell/Azure MCP), Azure DevOps
 (az devops + Azure DevOps MCP), .NET. Visual Studio IDE Copilot is NOT covered (it has no
 hook mechanism - manual approvals only).
