@@ -42,6 +42,20 @@
         "azure-devops",
         "copilot"
       ]
+    },
+    {
+      "name": "all-skills",
+      "source": "./plugins/all-skills",
+      "description": "Bundle: install every dusopp skill at once. Depends on agent-guardrails and git-worktree (auto-installed); its install-copilot.ps1 wires the GitHub Copilot side of every plugin in one go.",
+      "author": {
+        "name": "dusopp"
+      },
+      "category": "meta",
+      "keywords": [
+        "bundle",
+        "meta",
+        "install-all"
+      ]
     }
   ]
 }

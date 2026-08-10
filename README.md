@@ -1,11 +1,55 @@
 # dusopp/skills
 
-Personal [Claude Code plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces)
-- Windows / .NET / Azure focused.
+My personal skills that apply to **any project I work on** - packaged as a
+[Claude Code plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces),
+with every skill also consumable by GitHub Copilot (VS Code agent mode + Copilot CLI)
+via the open [Agent Skills](https://agentskills.io) standard. Windows / .NET / Azure /
+Azure DevOps focused.
+
+## Catalog
+
+| Plugin | What it does | Invocation |
+|---|---|---|
+| [agent-guardrails](#agent-guardrails) | Block-only PreToolUse guard: stops catastrophic az/azd/DevOps/git/disk commands and destructive MCP calls before any agent runs them | always on (hook); ops guide via `/agent-guardrails` |
+| [git-worktree](#git-worktree) | Parallel coding agents without collisions: one task = one worktree = one agent session (.NET bootstrap, ports/LocalDB deconfliction, ADO PR flow) | explicit: `/git-worktree` |
+| all-skills | Bundle that installs everything above at once | - |
+
+## Install
+
+Register the marketplace once:
 
 ```
 /plugin marketplace add dusopp/skills
 ```
+
+**One skill:**
+
+```
+/plugin install agent-guardrails@dusopp-skills     # or git-worktree@dusopp-skills
+```
+
+**Everything at once:**
+
+```
+/plugin install all-skills@dusopp-skills
+```
+
+The bundle auto-installs all plugins it depends on. (Uninstalling the bundle leaves the
+dependencies installed; `claude plugin prune` removes orphans.)
+
+**GitHub Copilot side** (hooks + skills for VS Code agent mode and Copilot CLI): after
+installing, run ONE script from the installed all-skills plugin:
+
+```powershell
+cd <installed all-skills plugin>\scripts
+.\install-copilot.ps1            # wires every plugin: guard hook + skill junctions
+.\install-copilot.ps1 -Uninstall # removes everything it wired
+```
+
+(Each plugin also has its own `scripts\install-copilot.ps1` if you installed just one.)
+
+**Update:** bump happens via `/plugin update <name>` after a push - plugin versions are
+pinned, so installed copies refresh only when `plugin.json` versions change.
 
 ## Plugins
 
@@ -43,7 +87,8 @@ cd <installed plugin>\scripts
 ```
 
 **Install (GitHub Copilot):** from the installed plugin's `scripts` dir run
-`.\install-copilot.ps1` (requires PowerShell 7+ for Copilot CLI hooks).
+`.\install-copilot.ps1` - writes the hook file (requires PowerShell 7+ for Copilot CLI
+hooks) and junctions the ops-guide skill into `~/.copilot/skills`.
 
 **Tune:** edit `plugins/agent-guardrails/scripts/dangerous-patterns.txt` (add tests in
 `test-guard.ps1`), push, `/plugin update agent-guardrails`. Machine-local additions that

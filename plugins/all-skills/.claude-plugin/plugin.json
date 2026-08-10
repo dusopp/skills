@@ -1,0 +1,13 @@
+{
+  "name": "all-skills",
+  "version": "0.1.0",
+  "description": "Bundle: installs every dusopp skill at once. Depends on agent-guardrails and git-worktree; installing this plugin auto-installs them all. Its install-copilot.ps1 wires the GitHub Copilot side of every plugin in one go.",
+  "author": {
+    "name": "dusopp",
+    "url": "https://github.com/dusopp"
+  },
+  "dependencies": [
+    "agent-guardrails",
+    "git-worktree"
+  ]
+}

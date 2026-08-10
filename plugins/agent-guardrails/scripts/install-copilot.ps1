@@ -1,20 +1,25 @@
 # agent-guardrails install-copilot.ps1
 # Wires GitHub Copilot (VS Code agent mode + Copilot CLI) to the same guard.ps1 that the
-# Claude Code plugin hook uses. Run this from the INSTALLED plugin's scripts directory
-# (paths are resolved from $PSScriptRoot and written as absolute paths).
+# Claude Code plugin hook uses, and junctions the agent-guardrails skill (ops guide) into
+# the user-level Copilot skills directory. Run from the INSTALLED plugin's scripts
+# directory (paths are resolved from $PSScriptRoot and written as absolute paths).
 #
-#   .\install-copilot.ps1                 # write %USERPROFILE%\.copilot\hooks\agent-guardrails.json
-#   .\install-copilot.ps1 -Uninstall      # remove the hook file
-#   .\install-copilot.ps1 -OutPath x.json # dry run: write the hook JSON elsewhere, skip prereq checks
+#   .\install-copilot.ps1                          # hook file + skill junction
+#   .\install-copilot.ps1 -Uninstall               # remove both
+#   .\install-copilot.ps1 -OutPath x.json          # hook dry-run only: write hook JSON
+#                                                  #   elsewhere, skip pwsh check and
+#                                                  #   (unless -SkillsRoot given) the skill
+#   .\install-copilot.ps1 -SkillsRoot <dir>        # override %USERPROFILE%\.copilot\skills
 #
 # IMPORTANT: Copilot CLI preToolUse hooks FAIL CLOSED - any hook error (missing pwsh,
-# bad path) denies EVERY tool call. That is why this script refuses to install without
-# PowerShell 7+ (pwsh) present. The guard itself always fails open (exit 0) internally.
+# bad path) denies EVERY tool call. That is why this script refuses to wire the hook
+# without PowerShell 7+ present. The guard itself always fails open (exit 0) internally.
 
 [CmdletBinding()]
 param(
     [switch]$Uninstall,
-    [string]$OutPath
+    [string]$OutPath,
+    [string]$SkillsRoot
 )
 
 $ErrorActionPreference = 'Stop'
@@ -23,6 +28,28 @@ $hookDir  = Join-Path $env:USERPROFILE '.copilot\hooks'
 $hookFile = Join-Path $hookDir 'agent-guardrails.json'
 if (-not [string]::IsNullOrEmpty($OutPath)) { $hookFile = $OutPath }
 
+$skillsRootGiven = -not [string]::IsNullOrEmpty($SkillsRoot)
+if (-not $skillsRootGiven) { $SkillsRoot = Join-Path $env:USERPROFILE '.copilot\skills' }
+$skillTarget = Join-Path $SkillsRoot 'agent-guardrails'
+$pluginRoot  = Split-Path -Parent $PSScriptRoot
+$skillSource = Join-Path $pluginRoot 'skills\agent-guardrails'
+# With -OutPath (hook dry-run) the skill step only runs when -SkillsRoot is explicit,
+# so a pure hook dry-run never touches the real ~/.copilot/skills.
+$doSkill = ([string]::IsNullOrEmpty($OutPath)) -or $skillsRootGiven
+
+# Deleting a junction with Remove-Item -Recurse in PS 5.1 can recurse INTO the target
+# and delete the real files. Junctions must be deleted as links, never recursively.
+function Remove-TargetSafely {
+    param([string]$Path)
+    if (-not (Test-Path -LiteralPath $Path)) { return }
+    $item = Get-Item -LiteralPath $Path -Force
+    if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+        [System.IO.Directory]::Delete($Path, $false)   # deletes the junction itself only
+    } else {
+        Remove-Item -LiteralPath $Path -Recurse -Force
+    }
+}
+
 if ($Uninstall) {
     if (Test-Path -LiteralPath $hookFile) {
         Remove-Item -LiteralPath $hookFile -Force
@@ -30,9 +57,40 @@ if ($Uninstall) {
     } else {
         Write-Host ('Nothing to remove: ' + $hookFile + ' does not exist')
     }
+    if ($doSkill) {
+        if (Test-Path -LiteralPath $skillTarget) {
+            Remove-TargetSafely -Path $skillTarget
+            Write-Host ('Removed ' + $skillTarget)
+        } else {
+            Write-Host ('Nothing to remove: ' + $skillTarget + ' does not exist')
+        }
+    }
     return
 }
 
+# --- 1. Skill junction (no pwsh required) ---------------------------------
+if ($doSkill) {
+    if (-not (Test-Path -LiteralPath (Join-Path $skillSource 'SKILL.md'))) {
+        throw ('Skill source not found: ' + $skillSource)
+    }
+    $skillSource = (Resolve-Path -LiteralPath $skillSource).Path
+    if (-not (Test-Path -LiteralPath $SkillsRoot)) { [void](New-Item -ItemType Directory -Force -Path $SkillsRoot) }
+    Remove-TargetSafely -Path $skillTarget
+    $linked = $false
+    try {
+        [void](New-Item -ItemType Junction -Path $skillTarget -Value $skillSource)
+        $linked = $true
+    } catch {
+        Copy-Item -LiteralPath $skillSource -Destination $skillTarget -Recurse -Force
+    }
+    if ($linked) {
+        Write-Host ('Skill junction created: ' + $skillTarget + ' -> ' + $skillSource)
+    } else {
+        Write-Host ('Skill copied to ' + $skillTarget + ' (junction not available; re-run after /plugin update).')
+    }
+}
+
+# --- 2. Hook wiring (needs pwsh 7+; fail-closed host) ---------------------
 $guardPath = Join-Path $PSScriptRoot 'guard.ps1'
 if (-not (Test-Path -LiteralPath $guardPath)) { throw ('guard.ps1 not found next to this script: ' + $guardPath) }
 $guardPath = (Resolve-Path -LiteralPath $guardPath).Path
@@ -40,7 +98,7 @@ $guardPath = (Resolve-Path -LiteralPath $guardPath).Path
 if ([string]::IsNullOrEmpty($OutPath)) {
     $pwsh = Get-Command pwsh -ErrorAction SilentlyContinue
     if ($null -eq $pwsh) {
-        Write-Host 'ABORT: PowerShell 7+ (pwsh) is not installed.' -ForegroundColor Red
+        Write-Host 'ABORT (hook wiring): PowerShell 7+ (pwsh) is not installed.' -ForegroundColor Red
         Write-Host 'Copilot CLI hooks on Windows require PowerShell 7+, and a broken hook DENIES every tool call (fail-closed).'
         Write-Host 'Install it first (winget install Microsoft.PowerShell), then re-run this script.'
         exit 1

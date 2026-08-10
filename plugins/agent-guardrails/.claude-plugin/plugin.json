@@ -1,6 +1,6 @@
 {
   "name": "agent-guardrails",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Block-only PreToolUse guard for catastrophic commands on Windows: az/azd/azcopy, Azure DevOps, Az PowerShell, dotnet nuget, git force-push, disk/registry wipes, and destructive MCP tool calls. One denylist shared by Claude Code and GitHub Copilot.",
   "author": {
     "name": "dusopp",

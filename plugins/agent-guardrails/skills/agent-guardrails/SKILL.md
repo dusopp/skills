@@ -28,6 +28,7 @@ hook mechanism - manual approvals only).
 
 Installed (Claude):  ~/.claude/plugins/... (${CLAUDE_PLUGIN_ROOT} resolves to it)
 Installed (Copilot): ~/.copilot/hooks/agent-guardrails.json -> points at the installed guard.ps1
+                     ~/.copilot/skills/agent-guardrails     -> junction to this skill (ops guide)
 Local overrides:     ~/.claude/guardrails-local.txt  # optional extra patterns, ALL consumers,
                                                      # survives plugin updates (additive only:
                                                      # it can add rules, never disable shipped ones)
@@ -86,8 +87,11 @@ Copilot through `.claude/settings.json` compatibility loading for the same reaso
 ## Install (GitHub Copilot)
 
 From the installed plugin's `scripts` dir: `.\install-copilot.ps1`
-- Prereq: PowerShell 7+ (`pwsh`). The script refuses to install without it, because
-  Copilot CLI preToolUse hooks FAIL CLOSED: a broken hook denies EVERY tool call.
+- Writes the hook file AND junctions this skill into `~/.copilot/skills/agent-guardrails`
+  so Copilot can also load the ops guide.
+- Prereq for the hook part: PowerShell 7+ (`pwsh`). The script refuses to wire the hook
+  without it, because Copilot CLI preToolUse hooks FAIL CLOSED: a broken hook denies
+  EVERY tool call.
 - Copilot CLI picks the hook up on next start.
 - VS Code agent mode additionally needs `"chat.hooks.enabled": true` (hooks are Preview);
   it reads the same `~/.copilot/hooks` directory. Until enabled, VS Code enforcement is
