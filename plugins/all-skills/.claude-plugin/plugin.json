@@ -1,6 +1,6 @@
 {
   "name": "all-skills",
-  "description": "Bundle: installs every dusopp skill at once. Depends on agent-guardrails, git-worktree, goal-loop, and setup-help; installing this plugin auto-installs them all. Its install-copilot.ps1 wires the GitHub Copilot side of every plugin in one go.",
+  "description": "Bundle: installs every dusopp skill at once. Depends on agent-guardrails, git-worktree, goal-loop, setup-help, and decisions; installing this plugin auto-installs them all. Its install-copilot.ps1 wires the GitHub Copilot side of every plugin in one go.",
   "author": {
     "name": "dusopp",
     "url": "https://github.com/dusopp"
@@ -9,6 +9,7 @@
     "agent-guardrails",
     "git-worktree",
     "goal-loop",
-    "setup-help"
+    "setup-help",
+    "decisions"
   ]
 }

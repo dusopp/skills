@@ -1,0 +1,8 @@
+{
+  "name": "decisions",
+  "description": "Ask the agent to list every decision or choice it made during the current work that it is not confident about, for quick review. Ported from davidondrej/skills. Explicit invocation: /decisions.",
+  "author": {
+    "name": "dusopp",
+    "url": "https://github.com/dusopp"
+  }
+}

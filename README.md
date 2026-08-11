@@ -14,6 +14,7 @@ Azure DevOps focused.
 | [git-worktree](#git-worktree) | Parallel coding agents without collisions: one task = one worktree = one agent session (.NET bootstrap, ports/LocalDB deconfliction, ADO PR flow) | explicit: `/git-worktree` |
 | [goal-loop](#goal-loop) | Goal contracts for persistent self-checking agent loops: Claude Code `/goal`, Copilot CLI `/autopilot`, VS Code Autopilot, cloud agent | explicit: `/goal-loop` |
 | [setup-help](#setup-help) | Step-by-step setup walkthroughs: one atomic step per response plus a glanceable max-8-item list of remaining steps | explicit: `/setup-help` |
+| [decisions](#decisions) | Lists every decision the agent made during the current work that it is not confident about, for quick review | explicit: `/decisions` |
 | all-skills | Bundle that installs everything above at once | - |
 
 ## Install
@@ -40,6 +41,7 @@ dependencies installed; `claude plugin prune` removes orphans.)
 /plugin install git-worktree@dusopp-skills       # parallel agents via git worktrees
 /plugin install goal-loop@dusopp-skills          # goal contracts for autonomous loops
 /plugin install setup-help@dusopp-skills         # step-by-step setup walkthroughs
+/plugin install decisions@dusopp-skills          # list low-confidence decisions for review
 ```
 
 **GitHub Copilot side** (hooks + skills for VS Code agent mode and Copilot CLI): after
@@ -180,6 +182,26 @@ Explicit invocation only: `/setup-help`.
 `.\install-copilot.ps1` - junctions the skill into `~/.copilot/skills`.
 
 Skill source: [`plugins/setup-help/skills/setup-help/SKILL.md`](plugins/setup-help/skills/setup-help/SKILL.md)
+
+### decisions
+
+A manual-invocation prompt that asks the agent to look back over the current work and
+list every decision or choice it made that it is **not** confident about - deliberately
+excluding anything it already considers the best possible solution - so low-confidence
+calls surface for review instead of quietly shipping. Ported from
+[davidondrej/skills](https://github.com/davidondrej/skills)
+`thinking-and-docs/decisions`. Explicit invocation only: `/decisions`.
+
+**Install (Claude Code):**
+
+```
+/plugin install decisions@dusopp-skills
+```
+
+**Install (GitHub Copilot):** from the installed plugin's `scripts` dir run
+`.\install-copilot.ps1` - junctions the skill into `~/.copilot/skills`.
+
+Skill source: [`plugins/decisions/skills/decisions/SKILL.md`](plugins/decisions/skills/decisions/SKILL.md)
 
 Inspired by [davidondrej/skills](https://github.com/davidondrej/skills)
 `ops-and-setup/global-agent-guardrails` (bash, multi-agent), rebuilt for Windows,

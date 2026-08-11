@@ -80,9 +80,25 @@
       ]
     },
     {
+      "name": "decisions",
+      "source": "./plugins/decisions",
+      "description": "Ask the agent to list every decision or choice it made during the current work that it is not confident about, for quick review. Explicit invocation: /decisions.",
+      "author": {
+        "name": "dusopp"
+      },
+      "category": "workflow",
+      "keywords": [
+        "decisions",
+        "review",
+        "reflection",
+        "confidence",
+        "retrospective"
+      ]
+    },
+    {
       "name": "all-skills",
       "source": "./plugins/all-skills",
-      "description": "Bundle: install every dusopp skill at once. Depends on agent-guardrails, git-worktree, goal-loop, and setup-help (auto-installed); its install-copilot.ps1 wires the GitHub Copilot side of every plugin in one go.",
+      "description": "Bundle: install every dusopp skill at once. Depends on agent-guardrails, git-worktree, goal-loop, setup-help, and decisions (auto-installed); its install-copilot.ps1 wires the GitHub Copilot side of every plugin in one go.",
       "author": {
         "name": "dusopp"
       },
