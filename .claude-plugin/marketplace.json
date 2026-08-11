@@ -44,9 +44,27 @@
       ]
     },
     {
+      "name": "goal-loop",
+      "source": "./plugins/goal-loop",
+      "description": "Write effective goal contracts for persistent self-checking agent loops and launch them: Claude Code /goal, Copilot CLI /autopilot (alias /goal), VS Code Autopilot mode, Copilot cloud agent (GitHub repos only). Anti-reward-hacking rules, .NET validation commands, drift management. Explicit invocation: /goal-loop.",
+      "author": {
+        "name": "dusopp"
+      },
+      "category": "workflow",
+      "keywords": [
+        "goal",
+        "autopilot",
+        "autonomous",
+        "long-running",
+        "stop-condition",
+        "dotnet",
+        "copilot"
+      ]
+    },
+    {
       "name": "all-skills",
       "source": "./plugins/all-skills",
-      "description": "Bundle: install every dusopp skill at once. Depends on agent-guardrails and git-worktree (auto-installed); its install-copilot.ps1 wires the GitHub Copilot side of every plugin in one go.",
+      "description": "Bundle: install every dusopp skill at once. Depends on agent-guardrails, git-worktree, and goal-loop (auto-installed); its install-copilot.ps1 wires the GitHub Copilot side of every plugin in one go.",
       "author": {
         "name": "dusopp"
       },

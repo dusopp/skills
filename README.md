@@ -12,6 +12,7 @@ Azure DevOps focused.
 |---|---|---|
 | [agent-guardrails](#agent-guardrails) | Block-only PreToolUse guard: stops catastrophic az/azd/DevOps/git/disk commands and destructive MCP calls before any agent runs them | always on (hook); ops guide via `/agent-guardrails` |
 | [git-worktree](#git-worktree) | Parallel coding agents without collisions: one task = one worktree = one agent session (.NET bootstrap, ports/LocalDB deconfliction, ADO PR flow) | explicit: `/git-worktree` |
+| [goal-loop](#goal-loop) | Goal contracts for persistent self-checking agent loops: Claude Code `/goal`, Copilot CLI `/autopilot`, VS Code Autopilot, cloud agent | explicit: `/goal-loop` |
 | all-skills | Bundle that installs everything above at once | - |
 
 ## Install
@@ -128,6 +129,30 @@ CLI and VS Code agent mode read automatically. (`-Uninstall` removes it. Visual 
 IDE has no skills support.)
 
 Skill source: [`plugins/git-worktree/skills/git-worktree/SKILL.md`](plugins/git-worktree/skills/git-worktree/SKILL.md)
+
+### goal-loop
+
+A playbook skill for **goal-driven autonomous runs**: turn a task into a 5-part contract
+(objective, constraints, validation command, verifiable stop condition, documentation)
+and launch it as a persistent self-checking loop - Claude Code `/goal <condition>`,
+Copilot CLI autopilot (Shift+Tab or `--autopilot` + `--max-autopilot-continues`; the
+`/autopilot`/`/goal` slash commands are experimental-mode only), VS Code
+Autopilot mode, or the Copilot cloud agent for walk-away runs (**GitHub repos only - not
+Azure Repos**; for ADO work use local CLI autopilot). Includes anti-reward-hacking rules
+("do not delete, skip, weaken, or narrow tests"), .NET validation commands, the
+meta-prompting trick for drafting contracts, and drift management. Explicit invocation
+only: `/goal-loop`.
+
+**Install (Claude Code):**
+
+```
+/plugin install goal-loop@dusopp-skills
+```
+
+**Install (GitHub Copilot):** from the installed plugin's `scripts` dir run
+`.\install-copilot.ps1` - junctions the skill into `~/.copilot/skills`.
+
+Skill source: [`plugins/goal-loop/skills/goal-loop/SKILL.md`](plugins/goal-loop/skills/goal-loop/SKILL.md)
 
 Inspired by [davidondrej/skills](https://github.com/davidondrej/skills)
 `ops-and-setup/global-agent-guardrails` (bash, multi-agent), rebuilt for Windows,

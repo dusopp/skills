@@ -39,15 +39,19 @@ $doSkill = ([string]::IsNullOrEmpty($OutPath)) -or $skillsRootGiven
 
 # Deleting a junction with Remove-Item -Recurse in PS 5.1 can recurse INTO the target
 # and delete the real files. Junctions must be deleted as links, never recursively.
+# Detection is attribute-based via Get-Item (NOT Test-Path, which resolves through the
+# reparse point and reports $false for a DANGLING junction, leaving it stuck forever).
+# Returns $true if something was removed.
 function Remove-TargetSafely {
     param([string]$Path)
-    if (-not (Test-Path -LiteralPath $Path)) { return }
-    $item = Get-Item -LiteralPath $Path -Force
+    $item = $null
+    try { $item = Get-Item -LiteralPath $Path -Force -ErrorAction Stop } catch { return $false }
     if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
         [System.IO.Directory]::Delete($Path, $false)   # deletes the junction itself only
     } else {
         Remove-Item -LiteralPath $Path -Recurse -Force
     }
+    return $true
 }
 
 if ($Uninstall) {
@@ -58,8 +62,7 @@ if ($Uninstall) {
         Write-Host ('Nothing to remove: ' + $hookFile + ' does not exist')
     }
     if ($doSkill) {
-        if (Test-Path -LiteralPath $skillTarget) {
-            Remove-TargetSafely -Path $skillTarget
+        if (Remove-TargetSafely -Path $skillTarget) {
             Write-Host ('Removed ' + $skillTarget)
         } else {
             Write-Host ('Nothing to remove: ' + $skillTarget + ' does not exist')
@@ -75,7 +78,7 @@ if ($doSkill) {
     }
     $skillSource = (Resolve-Path -LiteralPath $skillSource).Path
     if (-not (Test-Path -LiteralPath $SkillsRoot)) { [void](New-Item -ItemType Directory -Force -Path $SkillsRoot) }
-    Remove-TargetSafely -Path $skillTarget
+    [void](Remove-TargetSafely -Path $skillTarget)
     $linked = $false
     try {
         [void](New-Item -ItemType Junction -Path $skillTarget -Value $skillSource)
