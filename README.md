@@ -24,13 +24,7 @@ Register the marketplace once:
 /plugin marketplace add dusopp/skills
 ```
 
-**One skill:**
-
-```
-/plugin install agent-guardrails@dusopp-skills     # or git-worktree@dusopp-skills
-```
-
-**Everything at once:**
+**Install everything at once** (the all-skills bundle pulls in every plugin below):
 
 ```
 /plugin install all-skills@dusopp-skills
@@ -38,6 +32,15 @@ Register the marketplace once:
 
 The bundle auto-installs all plugins it depends on. (Uninstalling the bundle leaves the
 dependencies installed; `claude plugin prune` removes orphans.)
+
+**Install each skill separately:**
+
+```
+/plugin install agent-guardrails@dusopp-skills   # block catastrophic az/ADO/git/disk commands
+/plugin install git-worktree@dusopp-skills       # parallel agents via git worktrees
+/plugin install goal-loop@dusopp-skills          # goal contracts for autonomous loops
+/plugin install setup-help@dusopp-skills         # step-by-step setup walkthroughs
+```
 
 **GitHub Copilot side** (hooks + skills for VS Code agent mode and Copilot CLI): after
 installing, run ONE script from the installed all-skills plugin:
