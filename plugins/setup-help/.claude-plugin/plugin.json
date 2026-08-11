@@ -1,0 +1,9 @@
+{
+  "name": "setup-help",
+  "version": "0.1.0",
+  "description": "Guided step-by-step setup walkthroughs: one atomic current step per response plus a glanceable numbered list (max 8 headline items) of every remaining setup step. Ported from davidondrej/skills. Explicit invocation: /setup-help.",
+  "author": {
+    "name": "dusopp",
+    "url": "https://github.com/dusopp"
+  }
+}

@@ -62,9 +62,27 @@
       ]
     },
     {
+      "name": "setup-help",
+      "source": "./plugins/setup-help",
+      "description": "Guided step-by-step setup walkthroughs - one atomic step at a time with a max-8-item list of remaining steps. Explicit invocation: /setup-help.",
+      "author": {
+        "name": "dusopp"
+      },
+      "category": "workflow",
+      "keywords": [
+        "setup",
+        "onboarding",
+        "walkthrough",
+        "step-by-step",
+        "install",
+        "configure",
+        "copilot"
+      ]
+    },
+    {
       "name": "all-skills",
       "source": "./plugins/all-skills",
-      "description": "Bundle: install every dusopp skill at once. Depends on agent-guardrails, git-worktree, and goal-loop (auto-installed); its install-copilot.ps1 wires the GitHub Copilot side of every plugin in one go.",
+      "description": "Bundle: install every dusopp skill at once. Depends on agent-guardrails, git-worktree, goal-loop, and setup-help (auto-installed); its install-copilot.ps1 wires the GitHub Copilot side of every plugin in one go.",
       "author": {
         "name": "dusopp"
       },

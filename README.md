@@ -13,6 +13,7 @@ Azure DevOps focused.
 | [agent-guardrails](#agent-guardrails) | Block-only PreToolUse guard: stops catastrophic az/azd/DevOps/git/disk commands and destructive MCP calls before any agent runs them | always on (hook); ops guide via `/agent-guardrails` |
 | [git-worktree](#git-worktree) | Parallel coding agents without collisions: one task = one worktree = one agent session (.NET bootstrap, ports/LocalDB deconfliction, ADO PR flow) | explicit: `/git-worktree` |
 | [goal-loop](#goal-loop) | Goal contracts for persistent self-checking agent loops: Claude Code `/goal`, Copilot CLI `/autopilot`, VS Code Autopilot, cloud agent | explicit: `/goal-loop` |
+| [setup-help](#setup-help) | Step-by-step setup walkthroughs: one atomic step per response plus a glanceable max-8-item list of remaining steps | explicit: `/setup-help` |
 | all-skills | Bundle that installs everything above at once | - |
 
 ## Install
@@ -153,6 +154,27 @@ only: `/goal-loop`.
 `.\install-copilot.ps1` - junctions the skill into `~/.copilot/skills`.
 
 Skill source: [`plugins/goal-loop/skills/goal-loop/SKILL.md`](plugins/goal-loop/skills/goal-loop/SKILL.md)
+
+### setup-help
+
+A conversation-format skill for **guided setup walkthroughs**: every response gives ONE
+atomic current step (a single click, field, or command), a divider, then a numbered
+"Still remaining" list of headline-only items - never more than 8, with later steps
+merged into phase-level items so the list stays glanceable. Detail appears only when an
+item becomes the current step. Ported verbatim from
+[davidondrej/skills](https://github.com/davidondrej/skills) `ops-and-setup/setup-help`.
+Explicit invocation only: `/setup-help`.
+
+**Install (Claude Code):**
+
+```
+/plugin install setup-help@dusopp-skills
+```
+
+**Install (GitHub Copilot):** from the installed plugin's `scripts` dir run
+`.\install-copilot.ps1` - junctions the skill into `~/.copilot/skills`.
+
+Skill source: [`plugins/setup-help/skills/setup-help/SKILL.md`](plugins/setup-help/skills/setup-help/SKILL.md)
 
 Inspired by [davidondrej/skills](https://github.com/davidondrej/skills)
 `ops-and-setup/global-agent-guardrails` (bash, multi-agent), rebuilt for Windows,
