@@ -50,18 +50,19 @@ The manifest, `plugins/setup-help/.claude-plugin/plugin.json`:
 ```json
 {
   "name": "setup-help",
-  "version": "0.1.0",
   "description": "Guided step-by-step setup walkthroughs: ...",
   "author": { "name": "dusopp", "url": "https://github.com/dusopp" }
 }
 ```
+
+Note there is no `version` field - that is deliberate, see the versioning note below.
 
 Key manifest fields (all optional except `name`):
 
 | Field | Meaning |
 |---|---|
 | `name` | kebab-case identifier; also the namespace for the plugin's skills (`/setup-help:setup-help`) |
-| `version` | semantic version. **If set, installed users only ever receive updates when this field is bumped.** If omitted, the version resolves to the git commit SHA, so every push is an update |
+| `version` | semantic version. **If set, installed users only ever receive updates when this field is bumped.** If omitted, the version resolves to the git commit SHA, so every push is an update - this repo omits it everywhere for exactly that reason |
 | `description` | shown in the `/plugin` UI and listings |
 | `author` | `{ "name", "email"?, "url"? }` |
 | `dependencies` | other plugins to auto-install alongside this one (see 8.) - how `all-skills` works |
@@ -69,9 +70,11 @@ Key manifest fields (all optional except `name`):
 | `homepage`, `repository`, `license`, `keywords` | metadata for discovery |
 
 Version resolution order: `plugin.json` `version` -> marketplace entry `version` -> git
-commit SHA -> archive digest. This repo sets explicit versions everywhere, which is why
-CLAUDE.md has the hard rule: *any file change must bump the plugin's version in the same
-commit, or `/plugin update` silently delivers nothing.*
+commit SHA -> archive digest. This repo deliberately omits `version` everywhere, so every
+plugin's version **is** the marketplace repo's commit SHA: push == release, and `/plugin
+update` always delivers the latest pushed commit with nothing to bump. CLAUDE.md makes
+this a hard rule: *never add a `version` field - a stray one re-pins that plugin and
+silently stops updates.*
 
 A richer plugin, `plugins/agent-guardrails/`, additionally ships `hooks/hooks.json`
 (auto-discovered - no manifest key needed) and its test script. Hooks, MCP servers, and
@@ -123,8 +126,8 @@ marketplace entry only supplements it, `false` means the marketplace entry is th
 definition.
 
 If `version` is set in both the marketplace entry and `plugin.json`, `plugin.json` wins.
-That is why this repo keeps `version` **only** in `plugin.json` - a stale copy in the
-marketplace entry would be silently ignored and mislead you.
+This repo sets it in **neither** - commit-SHA versioning only works when both places omit
+it, because an explicit version in either one pins that plugin and stops SHA-based updates.
 
 ## 4. Installing
 
@@ -245,19 +248,20 @@ from a multi-skill plugin, that is a reason to keep plugins small, as this repo 
 
 ## 7. Updating
 
-Because every plugin here sets an explicit `version`, updates are **pull-based and
-version-gated**:
+Because no plugin here sets an explicit `version`, versions resolve to the marketplace
+repo's **commit SHA** - updates are pull-based, with nothing to bump:
 
-1. Author pushes changes **with a version bump** in the plugin's `plugin.json`.
+1. Author pushes changes. That is the whole release step.
 2. Consumer refreshes the catalog: `/plugin marketplace update dusopp-skills`
    (re-pulls the marketplace repo; does *not* touch installed plugins).
 3. Consumer updates the plugin: `/plugin update setup-help@dusopp-skills`
-   (fetches the new version into the cache and switches to it).
+   (fetches the new commit into the cache and switches to it).
 
-If the version was not bumped, step 3 reports "already at the latest version" no matter
-how many commits were pushed. This is the single most common "my update did nothing"
-cause, and the reason CLAUDE.md makes the bump mandatory in the same commit as any
-plugin file change.
+Every push changes the repo SHA, so step 3 always delivers the latest pushed state -
+for **all** plugins, since the SHA is repo-wide (untouched plugins get a harmless
+re-copy). If step 3 reports "already at the latest version" despite a push, step 2 was
+skipped or the commit was never pushed. The flip side: push == release, so unfinished
+work can be committed locally but must not be pushed.
 
 `/plugin marketplace update` with no name refreshes all marketplaces. A background
 refresh also runs after startup, but do not rely on it for immediate delivery - run the
@@ -320,9 +324,15 @@ kept, one command to restore); `uninstall` when you want it gone from settings a
 Claude Code's plugin management never touches GitHub Copilot. This repo additionally
 delivers every skill to Copilot (VS Code agent mode + Copilot CLI) by convention: each
 plugin ships `scripts/install-copilot.ps1`, which junctions the skill folder into
-`%USERPROFILE%\.copilot\skills\<name>` (junction = stays in sync with plugin updates;
-falls back to a copy where junctions are unavailable). `agent-guardrails`' installer
-also writes its hook file to `%USERPROFILE%\.copilot\hooks\`.
+`%USERPROFILE%\.copilot\skills\<name>` (falls back to a copy where junctions are
+unavailable). `agent-guardrails`' installer also writes its hook file to
+`%USERPROFILE%\.copilot\hooks\`.
+
+One caveat: the junction targets the **installed version's cache directory**
+(`~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`). Every `/plugin update`
+switches to a new directory - with commit-SHA versioning, that is every pushed commit -
+and the old one is auto-deleted after ~14 days, leaving the junction dangling. Re-run
+`install-copilot.ps1` after updating.
 
 ```powershell
 # wire everything at once (from the installed all-skills plugin's scripts dir):
@@ -347,15 +357,17 @@ Condensed from `CLAUDE.md` - all four in the same commit when adding a plugin:
    `plugins/agent-guardrails/` for hooks). Frontmatter `name` must equal the skill
    folder name; `description` is the retrieval trigger - make it concrete.
 2. Register the entry in `.claude-plugin/marketplace.json`.
-3. Add the plugin to `plugins/all-skills/.claude-plugin/plugin.json` `dependencies`
-   and bump all-skills' version.
+3. Add the plugin to `plugins/all-skills/.claude-plugin/plugin.json` `dependencies`.
 4. Add the README catalog row + section (and an install line in the Install section).
 
-Then: `claude plugin validate .` at the repo root must pass (add `--strict` to treat
-warnings as errors); run the plugin's test script if it has hook-shaped behavior;
+Then: `claude plugin validate .` at the repo root must pass. Expect one "No version
+specified" warning per plugin - that is the commit-SHA versioning choice, not a defect
+(which also means `--strict` cannot be used here, as it would turn those warnings into
+errors). Run the plugin's test script if it has hook-shaped behavior;
 commit locally; push only with explicit approval. After the push, consumers get the
 new plugin via `/plugin marketplace update dusopp-skills` + `/plugin install`, and
-changed plugins via `/plugin update` - but only if versions were bumped.
+changed plugins via `/plugin update` - every push is delivered (commit-SHA versioning,
+section 7).
 
 Scaffolding shortcut for greenfield plugins: `claude plugin init <name>` generates a
 starting structure (this repo prefers copying its own reference plugins instead, to
@@ -363,8 +375,12 @@ keep the Copilot installer and conventions).
 
 ## 11. Troubleshooting & gotchas
 
-- **"/plugin update did nothing"** - the version was not bumped (section 7). Bump
-  `plugin.json`, commit, push, `marketplace update`, then `plugin update`.
+- **"/plugin update did nothing"** - the catalog was not refreshed or the commit was
+  never pushed (section 7). Run `/plugin marketplace update dusopp-skills` first, then
+  `/plugin update`. Also check no `version` field crept into a plugin.json or
+  marketplace entry - an explicit version re-pins the plugin and blocks SHA updates.
+- **Copilot skill junction is dangling after an update** - junctions target the old
+  version's cache directory (section 9). Re-run `install-copilot.ps1`.
 - **Skill does not fire automatically** - check for `disable-model-invocation: true`
   (explicit-only by design here), and that the `description` actually mentions the
   vocabulary you used.

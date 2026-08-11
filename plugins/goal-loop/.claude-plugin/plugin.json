@@ -1,6 +1,5 @@
 {
   "name": "goal-loop",
-  "version": "0.1.0",
   "description": "Write effective goal contracts for persistent self-checking agent loops and launch them: Claude Code /goal, Copilot CLI /autopilot (alias /goal), VS Code Autopilot mode, Copilot cloud agent (GitHub repos only). Includes anti-reward-hacking rules, .NET validation commands, and drift management.",
   "author": {
     "name": "dusopp",

@@ -13,9 +13,11 @@ implementation is `plugins/agent-guardrails/` - copy its shape when adding anyth
 - **Do not push without explicit user approval.** Push works via the `dusopp@`-prefixed
   remote URL (separate GCM credential); everything else on this machine authenticates as
   `jurajglavasdev`. Commit locally and ask.
-- **Version bump rule: installed plugins update ONLY when plugin.json `version` changes.**
-  Any change to a plugin's files MUST bump its version in the same commit, or `/plugin
-  update` silently delivers nothing.
+- **Versioning is commit-SHA based: no `version` fields anywhere** (not in plugin.json,
+  not in marketplace entries). With no explicit version, Claude Code keys updates on the
+  marketplace repo's git commit SHA - push == release, and `/plugin update` always
+  delivers the latest pushed commit. Never add a `version` field: a stray one re-pins
+  that plugin and silently stops updates.
 - Every plugin must pass `claude plugin validate .` (run at repo root) and its own test
   script before committing.
 - Scripts and pattern files: **ASCII only, Windows PowerShell 5.1 compatible** (no ternary,
@@ -28,20 +30,20 @@ implementation is `plugins/agent-guardrails/` - copy its shape when adding anyth
 ```
 .claude-plugin/marketplace.json      <- register the plugin here (name, source, description)
 plugins/<plugin-name>/
-  .claude-plugin/plugin.json         <- name (required), version, description, author
+  .claude-plugin/plugin.json         <- name (required), description, author - NO version
   hooks/hooks.json                   <- only if the plugin ships hooks (auto-discovered)
   scripts/                           <- implementation + its test script
   skills/<skill-name>/SKILL.md       <- the operations/maintenance guide (see below)
 ```
 
-kebab-case names everywhere. Plugin `version` lives in plugin.json only (marketplace entry
-would silently lose). Relative `source` paths resolve against the repo root.
+kebab-case names everywhere. No `version` field in plugin.json or the marketplace entry
+(commit-SHA versioning, rule above). Relative `source` paths resolve against the repo root.
 
 **New-plugin checklist** (all four, same commit):
 1. Create `plugins/<name>/` per the layout above.
 2. Register it in `.claude-plugin/marketplace.json`.
 3. Add it to `plugins/all-skills/.claude-plugin/plugin.json` `dependencies` (the bundle
-   that installs everything at once) and bump all-skills' version.
+   that installs everything at once).
 4. Add a README catalog row + section.
 
 **Copilot delivery convention:** every plugin ships `scripts/install-copilot.ps1`
@@ -88,7 +90,7 @@ Skills must satisfy the open Agent Skills spec (agentskills.io), which Copilot i
    nonzero exit on failure. A pattern/behavior change without a matching test case is not done.
 5. **Validate**: all JSON parses (`ConvertFrom-Json`), `claude plugin validate .`, test
    script green under 5.1 (and pwsh if present).
-6. **Commit locally** (message + `Co-Authored-By: Claude ...` trailer). Do not push (rule above).
+6. **Do not commit locally** (message + `Co-Authored-By: Claude ...` trailer). Do not push (rule above).
 
 ## SKILL.md body conventions
 
@@ -127,3 +129,9 @@ Details and rationale live in `plugins/agent-guardrails/scripts/guard.ps1` comme
 - **MCP guarding**: destructive intent often lives in `tool_input.command` values (Azure MCP
   namespace mode), not tool names; scan only properties literally named `command`, never
   free-text fields (work item descriptions cause false blocks).
+- **Copilot junctions dangle after plugin updates**: install-copilot.ps1 resolves its
+  junction source from `$PSScriptRoot`, so when run from an installed plugin it targets the
+  versioned cache dir `~/.claude/plugins/cache/<marketplace>/<plugin>/<version>/`. Every
+  update rotates that dir (with commit-SHA versioning: every push) and orphaned dirs are
+  auto-deleted after ~14 days - consumers must re-run install-copilot.ps1 after
+  `/plugin update`.

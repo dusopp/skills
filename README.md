@@ -53,8 +53,10 @@ cd <installed all-skills plugin>\scripts
 
 (Each plugin also has its own `scripts\install-copilot.ps1` if you installed just one.)
 
-**Update:** bump happens via `/plugin update <name>` after a push - plugin versions are
-pinned, so installed copies refresh only when `plugin.json` versions change.
+**Update:** run `/plugin marketplace update dusopp-skills` then `/plugin update <name>`
+after a push - versioning is commit-SHA based (no `version` fields), so every pushed
+commit is delivered. Re-run `install-copilot.ps1` afterwards if you use the Copilot side
+(the skill junctions point at the old version's cache directory).
 
 ## Plugins
 
